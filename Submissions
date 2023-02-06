@@ -9,6 +9,331 @@ HAVING COUNT(candidate_id)=3
 ------
 2. Page With No Likes [Facebook SQL Interview Question] - Easy : https://datalemur.com/questions/sql-page-with-no-likes
 
+SELECT page_id
+FROM pages
+WHERE page_id NOT IN (SELECT page_id FROM page_likes)
+
+------
+3. Unfinished Parts [Tesla SQL Interview Question] - Easy : https://datalemur.com/questions/tesla-unfinished-parts
+
+SELECT DISTINCT part 
+FROM parts_assembly
+WHERE finish_date IS NULL
+
+------
+4. Laptop vs. Mobile Viewership [New York Times SQL Interview Question] - Easy : https://datalemur.com/questions/laptop-mobile-viewership
+
+SELECT
+  SUM(CASE WHEN device_type = 'laptop' THEN 1 END) AS laptop_views,
+  SUM(CASE WHEN device_type IN ('tablet', 'phone') THEN 1 END) AS mobile_views
+FROM viewership
+
+------
+5. Duplicate Job Listings [Linkedin SQL Interview Question] - Easy : https://datalemur.com/questions/duplicate-job-listings
+
+WITH duplicate_list AS (
+SELECT 
+  company_id, 
+  title, 
+  description
+FROM job_listings
+GROUP BY
+  company_id, 
+  title, 
+  description
+HAVING COUNT(company_id)>1)
+
+SELECT COUNT(company_id) AS co_w_duplicate_jobs FROM duplicate_list
+
+------
+6. Average Post Hiatus (Part 1) [Facebook SQL Interview Question] - Easy : https://datalemur.com/questions/sql-average-post-hiatus-1
+
+SELECT 
+  user_id,
+  MAX(post_date::DATE)-MIN(post_date::DATE) as days_between
+FROM posts
+WHERE EXTRACT(year FROM post_date)=2021
+GROUP BY
+  user_id
+HAVING 
+  COUNT(user_id)>1
+
+------
+7. Teams Power Users [Microsoft SQL Interview Question] - Easy : https://datalemur.com/questions/teams-power-users
+
+SELECT
+  sender_id,
+  COUNT(sender_id) as message_count
+FROM messages
+WHERE 
+  EXTRACT(month FROM sent_date) = 8 
+  AND EXTRACT(year FROM sent_date) = 2022
+GROUP BY sender_id 
+ORDER BY COUNT(sender_id) DESC
+LIMIT 2
+
+------
+8. Cities With Completed Trades [Robinhood SQL Interview Question] - Easy : https://datalemur.com/questions/completed-trades
+
+SELECT 
+  u.city,
+  COUNT(t.user_id) as total_orders
+FROM
+  users u,
+  trades t
+WHERE
+  u.user_id = t.user_id AND
+  t.status = 'Completed'
+GROUP BY city
+ORDER BY COUNT(t.user_id) DESC
+LIMIT 3
+
+------
+9. Average Review Ratings [Amazon SQL Interview Question] - Easy : https://datalemur.com/questions/sql-avg-review-ratings
+
+SELECT
+  EXTRACT(month FROM submit_date) AS mth,
+  product_id as product,
+  ROUND(AVG(stars),2) as avg_stars
+FROM reviews
+GROUP BY 
+  EXTRACT(month FROM submit_date), 
+  product_id
+ORDER BY 
+  EXTRACT(month FROM submit_date),
+  product_id 
+  
+------
+10. App Click-through Rate (CTR) [Facebook SQL Interview Question] - Easy : https://datalemur.com/questions/click-through-rate
+
+SELECT
+  app_id,
+  ROUND(100.0*SUM(CASE WHEN event_type = 'click' THEN 1 END)/SUM(CASE WHEN event_type = 'impression' THEN 1 END),2) as ctr
+FROM events
+WHERE EXTRACT(year FROM timestamp)=2022
+GROUP BY app_id
+
+------
+11. Second Day Confirmation [TikTok SQL Interview Question] - Easy : https://datalemur.com/questions/second-day-confirmation
+
+SELECT user_id 
+FROM 
+  emails e,
+  texts t
+WHERE 
+  e.email_id = t. email_id
+  AND t.signup_action = 'Confirmed'
+  AND t.action_date::DATE = e.signup_date::DATE+1
+  
+------
+12. Cards Issued Difference [JPMorgan Chase SQL Interview Question] - Easy : https://datalemur.com/questions/cards-issued-difference
+
+SELECT 
+  card_name,
+  MAX(issued_amount)-MIN(issued_amount) AS difference
+FROM monthly_cards_issued
+GROUP BY card_name
+ORDER BY MAX(issued_amount)-MIN(issued_amount) DESC
+
+------
+13. Compressed Mean [Alibaba SQL Interview Question] - Easy : https://datalemur.com/questions/alibaba-compressed-mean
+
+SELECT
+  ROUND(1.0*SUM(item_count*order_occurrences)/SUM(order_occurrences), 1) as mean
+FROM items_per_order
+
+------
+14. Pharmacy Analytics (Part 1) [CVS Health SQL Interview Question] - Easy : https://datalemur.com/questions/top-profitable-drugs
+
+SELECT
+  drug,
+  total_sales - cogs AS total_profit
+FROM pharmacy_sales 
+ORDER BY total_sales - cogs DESC 
+LIMIT 3
+
+------
+15. Pharmacy Analytics (Part 2) [CVS Health SQL Interview Question] - Easy : https://datalemur.com/questions/non-profitable-drugs
+
+SELECT
+  manufacturer,
+  COUNT(drug) AS drug_count,
+  ABS(SUM(total_sales - cogs)) AS total_loss
+FROM pharmacy_sales
+WHERE total_sales - cogs<0
+GROUP BY manufacturer
+ORDER BY total_loss DESC
+
+------
+16. Pharmacy Analytics (Part 3) [CVS Health SQL Interview Question] - Easy : https://datalemur.com/questions/total-drugs-sales
+
+SELECT
+  manufacturer,
+  CONCAT('$', ROUND(SUM(total_sales)/1000000), ' million') as sale
+FROM pharmacy_sales
+GROUP BY manufacturer
+ORDER BY SUM(total_sales) DESC 
+
+------
+17. Patient Support Analysis (Part 1) [UnitedHealth SQL Interview Question] - Easy : https://datalemur.com/questions/frequent-callers
+
+WITH memc AS (
+SELECT 
+   policy_holder_id
+FROM
+  callers
+GROUP BY policy_holder_id
+HAVING COUNT(policy_holder_id)>2
+)
+
+SELECT COUNT(*) AS member_count FROM memc
+
+------
+18. Patient Support Analysis (Part 2) [UnitedHealth SQL Interview Question] - Easy : https://datalemur.com/questions/uncategorized-calls-percentage
+
+SELECT
+  ROUND(1.0*SUM(CASE WHEN call_category = 'n/a' OR call_category IS NULL THEN 1 END)/SUM(CASE WHEN case_id IS NOT NULL THEN 1 END)*100, 1) AS call_percentage
+FROM callers
+
+------
+19. Average Deal Size (Part 1) [Salesforce SQL Interview Question] - Easy : https://datalemur.com/questions/sql-average-deal-size
+
+SELECT 
+  ROUND(1.00*SUM(num_seats*yearly_seat_cost)/COUNT(customer_id),2) AS average_deal_size
+FROM contracts 
+
+------
+20. User's Third Transaction [Uber SQL Interview Question] - Medium : https://datalemur.com/questions/sql-third-transaction
+
+
+
+------
+21. Sending vs. Opening Snaps [Snapchat SQL Interview Question] - Medium : https://datalemur.com/questions/time-spent-snaps
+
+SELECT
+  age_bucket,
+  ROUND(1.0*SUM(CASE WHEN activity_type = 'send' THEN time_spent END)/SUM(CASE WHEN activity_type = 'send' OR activity_type = 'open' THEN time_spent END)*100, 2) AS send_perc,
+  ROUND(1.0*SUM(CASE WHEN activity_type = 'open' THEN time_spent END)/SUM(CASE WHEN activity_type = 'send' OR activity_type = 'open' THEN time_spent END)*100, 2) AS open_perc
+FROM
+  activities a,
+  age_breakdown ab
+WHERE
+  a.user_id = ab.user_id
+GROUP BY age_bucket
+
+------
+22. Tweets' Rolling Averages [Twitter SQL Interview Question] - Medium : https://datalemur.com/questions/rolling-average-tweets
+
+
+
+------
+23. Highest-Grossing Items [Amazon SQL Interview Question] - Medium : https://datalemur.com/questions/sql-highest-grossing
+
+
+
+------
+24. Top 5 Artists [Spotify SQL Interview Question] - Medium : https://datalemur.com/questions/top-fans-rank
+
+
+
+------
+25. Signup Activation Rate [TikTok SQL Interview Question] - Medium : https://datalemur.com/questions/signup-confirmation-rate
+
+WITH activate AS (
+  SELECT
+    e.email_id,
+    e.user_id,
+    e.signup_date,
+    t.text_id,
+    t.signup_action
+  FROM
+    emails e
+  LEFT JOIN
+    texts t
+  ON e.email_id = t.email_id
+)
+
+SELECT 
+  ROUND(1.0*SUM(CASE WHEN signup_action='Confirmed' THEN 1 END)/COUNT(DISTINCT email_id), 2) AS confirm_rate FROM activate
+  
+------
+26. Frequently Purchased Pairs [Walmart SQL Interview Question] - Medium : https://datalemur.com/questions/frequently-purchased-pairs
+
+WITH unique_purchase AS (
+SELECT 
+  COUNT(transaction_id) AS num_tst
+FROM transactions
+GROUP BY transaction_id
+HAVING COUNT(transaction_id)>1
+)
+
+SELECT COUNT(*) AS unique_pairs FROM unique_purchase
+
+------
+27. Supercloud Customer [Microsoft SQL Interview Question] - Medium : https://datalemur.com/questions/supercloud-customer
+
+SELECT 
+  customer_id
+FROM
+  customer_contracts c,
+  products p
+WHERE c.product_id = p.product_id
+GROUP BY customer_id
+HAVING COUNT(DISTINCT product_category)=3
+
+------
+28. Odd and Even Measurements [Google SQL Interview Question] - Medium : https://datalemur.com/questions/odd-even-measurements
+
+
+
+------
+29. Histogram of Users and Purchases [Walmart SQL Interview Question] - Medium : https://datalemur.com/questions/histogram-users-purchases
+
+
+
+------
+30. Compressed Mode [Alibaba SQL Interview Question] - Medium : https://datalemur.com/questions/alibaba-compressed-mode
+
+SELECT
+  item_count AS mode
+FROM
+  items_per_order
+WHERE
+  order_occurrences = (SELECT MAX(order_occurrences) FROM items_per_order)
+  
+------
+31. Card Launch Success [JPMorgan Chase SQL Interview Question] - Medium : https://datalemur.com/questions/card-launch-success
+
+
+
+------
+32. International Call Percentage [Verizon SQL Interview Question] - Medium : https://datalemur.com/questions/international-call-percentage
+
+WITH a AS (SELECT
+  i.country_id AS country_call,
+  j.country_id AS country_receiver
+FROM 
+  phone_calls c
+INNER JOIN
+  phone_info i
+ON
+c.caller_id = i.caller_id
+INNER JOIN
+  phone_info j 
+ON c.receiver_id = j.caller_id)
+
+SELECT 
+  ROUND(1.0*SUM(CASE WHEN country_call != country_receiver THEN 1 END)/SUM(CASE WHEN country_call IS NOT NULL THEN 1 END)*100, 1)
+FROM a
+
+------
+33. Best-Selling Product [Amazon SQL Interview Question] - Medium : https://datalemur.com/questions/best-selling-products
+
+
+
+------
+34. NYC Area Code [Verizon SQL Interview Question] - Medium : https://datalemur.com/questions/nyc-area-code
+
 
 
 ------
